@@ -1,4 +1,4 @@
-import unicode,strutils
+import strutils
 
 const Sym = {'<', '>', '=', '{', '}', ')', '.', '('}
 
@@ -74,7 +74,6 @@ proc compile(self:Compiler,js:string): void =
   var dat:string
   var tok = new Token
   while (i < eof) :
-    
     if isSym(js[i]):
       tok.kind = $js[i]
       tok.data = $js[i]
@@ -93,6 +92,7 @@ proc compile(self:Compiler,js:string): void =
       inc i
       tok.kind = "string"
       tok.data =  del & dat & del
+      
     elif js[i] == '/':
       inc i
       var n = js[i]
@@ -290,7 +290,7 @@ proc parse_inner(self:Compiler): void =
     if self.current > 0 and self.tokens[self.current - 1].kind == "space":
       dec self.current
     while (not self.peek("{") and not self.peek("string") and not self.peek("<")):
-      inner &= self.tokens[self.current].data
+      inner &= self.tokens[self.current].data.strip
       self.next_raw()
       
     self.emit(",")
