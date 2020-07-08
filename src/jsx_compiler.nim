@@ -211,7 +211,7 @@ proc expect(self:Compiler, kind:string): void =
   else:
     self.printLine(t.line,self.current,"Error: unexpected " & t.data)
 
-proc is_tag(self:Compiler): auto = 
+proc is_tag(self:Compiler): bool = 
   var p:TokenLine 
   var possible = true
   if self.current == 0:
