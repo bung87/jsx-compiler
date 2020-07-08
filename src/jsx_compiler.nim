@@ -16,7 +16,7 @@ type
     line:int
 
 proc parseTag(self:Compiler): void 
-proc parse_body(self:Compiler, jsexpr:bool = false): void
+proc parseBody(self:Compiler, jsexpr:bool = false): void
 
 proc isSpace(c:char): bool = 
   return c == ' ' or c == '\t' or c == '\n'
@@ -165,9 +165,9 @@ proc compile(self:Compiler,js:string): void =
     self.tokens.add token
     lineno += skip
     skip = 0
-  self.parse_body()
+  self.parseBody()
 
-proc get_previous(self:Compiler): int = 
+proc getPrevious(self:Compiler): int = 
   var prev:int
   if self.tokens[self.current - 1].kind == "space":
     prev = self.current - 2
@@ -228,7 +228,7 @@ proc is_tag(self:Compiler): bool =
       return true
   return false
 
-proc parse_body(self:Compiler, jsexpr:bool = false): void = 
+proc parseBody(self:Compiler, jsexpr:bool = false): void = 
   var c = -1
   while self.current < self.tokens.len - 1:
     if jsexpr:
@@ -249,7 +249,7 @@ proc parse_jsexpr(self:Compiler): void =
   self.expect("{")
   self.in_tag = false
   self.emit("(")
-  self.parse_body(true)
+  self.parseBody(true)
   self.emit(")")
   self.in_tag = true
   self.expect("}")
@@ -259,11 +259,11 @@ proc parse_params(self:Compiler, first:bool): void =
   if self.accept("name"):
     if not first:
       self.emit(", ")
-    key = self.tokens[self.get_previous()].data
+    key = self.tokens[self.getPrevious()].data
     self.emit("'" & key & "'" & ": ")
     if self.accept("="):
       if self.accept("string"):
-        val = self.tokens[self.get_previous()].data
+        val = self.tokens[self.getPrevious()].data
         self.emit(val)
       else:
         self.parse_jsexpr()
@@ -271,11 +271,11 @@ proc parse_params(self:Compiler, first:bool): void =
       self.emit("true")
     self.parse_params(false)
 
-proc parse_inner(self:Compiler): void = 
+proc parseInner(self:Compiler): void = 
   var val:string
   if self.accept("string"):
     self.emit(",")
-    val = self.tokens[self.get_previous()].data
+    val = self.tokens[self.getPrevious()].data
   elif self.peek("{"):
     self.emit(",")
     self.parse_jsexpr()
@@ -295,18 +295,18 @@ proc parse_inner(self:Compiler): void =
       
     self.emit(",")
     self.emit("\"" & inner & "\"")
-  self.parse_inner()
+  self.parseInner()
 
-proc parse_closing(self:Compiler, name:string): void = 
+proc parseClosing(self:Compiler, name:string): void = 
   if self.accept("/"):
     self.expect(">")
   else:
     self.expect(">")
-    self.parse_inner()
+    self.parseInner()
     self.expect("<")
     self.expect("/")
     self.expect("name")
-    var closing = self.get_previous()
+    var closing = self.getPrevious()
     if self.tokens[closing].data != name:
       self.printLine(self.tokens[closing].line,closing,"Error: expected closing tag for " & name)
     else:
@@ -317,7 +317,7 @@ proc parseTag(self:Compiler): void =
   var name,formatted:string
   self.expect("<")
   self.expect("name")
-  name = self.tokens[self.get_previous()].data
+  name = self.tokens[self.getPrevious()].data
   formatted = name
   if name[0].toUpperAscii() != name[0]:
     formatted = "\"" & name & "\""
@@ -325,7 +325,7 @@ proc parseTag(self:Compiler): void =
   self.emit("{")
   self.parse_params(true)
   self.emit("}")
-  self.parse_closing(name)
+  self.parseClosing(name)
 
 proc newCompiler*(factory = "React.createElement"):Compiler = 
   new result
